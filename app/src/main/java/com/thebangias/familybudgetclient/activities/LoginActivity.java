@@ -3,13 +3,13 @@ package com.thebangias.familybudgetclient.activities;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -17,17 +17,15 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Patterns;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import com.thebangias.familybudgetclient.R;
 import com.thebangias.familybudgetclient.utils.APIUtils;
@@ -39,7 +37,7 @@ import java.util.List;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
+public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -224,14 +222,15 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
             String packageName = getString(R.string.package_name);
             SharedPreferences prefs = this.getSharedPreferences(
                     packageName, Context.MODE_PRIVATE);
-            prefs.edit().putString(packageName + ".apirooturl", apiRootUrlView.getText().toString());
-            prefs.edit().putString(packageName + ".email", emailView.getText().toString());
-            prefs.edit().putString(packageName + ".password", passwordView.getText().toString());
-            prefs.edit().commit();
+            Editor prefsEditor = prefs.edit();
+            prefsEditor.putString(packageName + ".apirooturl", apiRootUrlView.getText().toString());
+            prefsEditor.putString(packageName + ".email", emailView.getText().toString());
+            prefsEditor.putString(packageName + ".password", passwordView.getText().toString());
+            prefsEditor.apply();
 
             // open the HomeActivity
-            Intent homeScreen = new Intent(getApplicationContext(), HomeActivity.class);
-            homeScreen.putExtra("message", "Authentication Passed!");
+            Intent homeScreen = new Intent(this, HomeActivity.class);
+            homeScreen.putExtra("auth-msg", "Authentication Passed!");
             startActivity(homeScreen);
 
         } else {

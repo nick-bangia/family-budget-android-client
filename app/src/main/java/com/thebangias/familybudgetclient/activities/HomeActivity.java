@@ -16,16 +16,6 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-
-        // get the authText textView
-        TextView txtAuthentication = (TextView) findViewById(R.id.authText);
-
-        // get the value from the login screen
-        Intent i = getIntent();
-        String authText = i.getStringExtra("message");
-
-        // display the message
-        txtAuthentication.setText(authText);
     }
 
     @Override
