@@ -9,9 +9,9 @@ import java.util.List;
 /**
  * Models the response from the /allowances operation to the API
  */
-public class BudgetAllowancesResponse extends APIResponseObject {
+public class AllowancesResponse extends APIResponseObject {
 
-    private List<BudgetAllowance> data;
+    private List<Allowance> data;
 
     public List<? extends DataObject> getData() {
         return this.data;
@@ -21,13 +21,13 @@ public class BudgetAllowancesResponse extends APIResponseObject {
         this.data = GetStronglyTypedListFrom(value);
     }
 
-    public List<BudgetAllowance> GetStronglyTypedListFrom(List<? extends DataObject> list) {
+    public List<Allowance> GetStronglyTypedListFrom(List<? extends DataObject> list) {
         // loop through the List, and insert each element, casted as a PingDataObject,
         // into a new list
-        ArrayList<BudgetAllowance> newList = new ArrayList();
+        ArrayList<Allowance> newList = new ArrayList();
 
         for (DataObject dataObject : list) {
-            newList.add((BudgetAllowance)dataObject);
+            newList.add((Allowance)dataObject);
         }
 
         return newList;

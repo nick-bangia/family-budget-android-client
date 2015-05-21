@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primaryColor">#ff0f8b0d</color>
+    <color name="primaryColorDark">#000000</color>
+    <color name="datagrid_header_bg">#dddddd</color>
+    <color name="datagrid_header_text">#000000</color>
+</resources>

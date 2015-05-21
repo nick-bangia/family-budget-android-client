@@ -3,6 +3,8 @@ package com.thebangias.familybudgetclient.utils;
 import android.util.Base64;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.thebangias.familybudgetclient.model.AllowancesResponse;
 import com.thebangias.familybudgetclient.model.Ping;
 import com.thebangias.familybudgetclient.model.abstractions.APIResponseObject;
 import com.thebangias.familybudgetclient.model.abstractions.DataObject;
@@ -48,6 +50,20 @@ public class APIUtils {
         }
 
         return isValidCredentials;
+    }
+
+    public AllowancesResponse GetAllowances() {
+        // initialize the AllowanceResponse
+        AllowancesResponse response = null;
+
+        // issue a request to the API to get the current allowances
+        HttpURLConnection connection = GetAuthorizedConnection("/allowances");
+        if (connection != null) {
+            // if the connection is not null, issue the Get request
+            response = (AllowancesResponse) Get(connection, AllowancesResponse.class);
+        }
+
+        return response;
     }
 
     private APIResponseObject Get(HttpURLConnection connection,
@@ -102,7 +118,8 @@ public class APIUtils {
 
                 // get the response data into a string, and convert it from JSON to the
                 // APIResponseObject class using the GSON library
-                response = new Gson().fromJson(GetResponseData(stream), apiResponseClass);
+                Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create();
+                response = gson.fromJson(GetResponseData(stream), apiResponseClass);
 
             } else if (connection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 // if the response code is 401 - Unauthorized, set up the response object accordingly

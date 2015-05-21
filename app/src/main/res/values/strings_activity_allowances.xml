@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_allowances">Allowances</string>
+    <string name="drawer_open">Open</string>
+    <string name="drawer_close">Close</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_addNew">+</string>
+
+    <string name="sc_header_name">Name</string>
+    <string name="sc_header_amount">$ Reconciled</string>
+</resources>
