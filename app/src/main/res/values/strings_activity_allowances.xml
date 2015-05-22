@@ -6,6 +6,8 @@
     <string name="action_settings">Settings</string>
     <string name="action_addNew">+</string>
 
-    <string name="sc_header_name">Name</string>
-    <string name="sc_header_amount">$ Reconciled</string>
+    <string name="sc_header_name_collapsed_icon">+</string>
+    <string name="sc_header_name_expanded_icon">-</string>
+    <string name="sc_header_name">Category</string>
+    <string name="sc_header_amount">Amount</string>
 </resources>

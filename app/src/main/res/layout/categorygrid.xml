@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <TableLayout
+        android:id="@+id/category_layout"
+        android:layout_width="match_parent"
+        android:stretchColumns="1,2"
+        android:layout_span="2"
+        android:layout_height="wrap_content">
+
+        <TableRow
+            android:id="@+id/categoryRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp">
+
+            <com.thebangias.familybudgetclient.views.ToggleText
+                android:id="@+id/categoryTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="5dp"
+                android:background="@color/category_header_bg"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textStyle="bold"
+                android:layout_column="1"/>
+
+            <TextView
+                android:id="@+id/categoryBalance"
+                android:paddingRight="5dp"
+                android:background="@color/category_header_bg"
+                android:text="Balance"
+                android:gravity="end"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:layout_column="2" />
+
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/gridRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp"
+            android:visibility="gone">
+
+            <GridView
+                android:id="@+id/gridView"
+                android:layout_column="1"
+                android:layout_span="2"/>
+
+        </TableRow>
+    </TableLayout>
+</merge>

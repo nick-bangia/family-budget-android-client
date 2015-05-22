@@ -1,6 +1,7 @@
-package com.thebangias.familybudgetclient.controls;
+package com.thebangias.familybudgetclient.adapters;
 
 import android.app.Activity;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -20,7 +21,7 @@ public class SubcategoryGridAdapter extends BaseAdapter {
     private Activity context = null;
     private List<SubcategoryAllowance> items = null;
     public final int SUBCATEGORY_COLUMN_COUNT = 2;
-    private NumberFormat currency = NumberFormat.getCurrencyInstance();
+    private NumberFormat currency;
 
     // an enum to help define the columns of the subcategory grid
     private enum SubcategoryColumns {
@@ -39,11 +40,12 @@ public class SubcategoryGridAdapter extends BaseAdapter {
         }
     }
 
-    public SubcategoryGridAdapter(Activity context, List<SubcategoryAllowance> items) {
+    public SubcategoryGridAdapter(Activity context, NumberFormat currency, List<SubcategoryAllowance> items) {
         super();
 
         this.context = context;
         this.items = items;
+        this.currency = currency;
     }
 
     @Override
@@ -60,6 +62,9 @@ public class SubcategoryGridAdapter extends BaseAdapter {
         // get the row that this position falls in, to test whether we are in the header
         int row = GetRow(position);
 
+        // get the column that this position falls in, to determine what column we are in
+        int col = GetCol(position);
+
         // Get the text for this position
         String text = PositionToString(position);
 
@@ -73,8 +78,41 @@ public class SubcategoryGridAdapter extends BaseAdapter {
 
         // if this row is a header, set the background color
         if (row == 0) {
+
             control.setBackgroundColor(context.getResources().getColor(R.color.datagrid_header_bg));
             control.setTextColor(context.getResources().getColor(R.color.datagrid_header_text));
+        } else {
+            // default the text color for the data
+            control.setTextColor(context.getResources().getColor(R.color.datagrid_data_text));
+            // if the amount field is negative, then color it red
+            if (col == SubcategoryColumns.AMOUNT.getPosition() &&
+                text.startsWith(context.getResources().getString(R.string.negativeCurrencyPrefix))) {
+                // this is not the header AND it is the amount position AND it is negative so
+                // change the text color to the negative_currency color
+                control.setTextColor(context.getResources().getColor(R.color.negative_currency));
+            }
+        }
+
+        // setup each controls formatting based on whether it is a header column, or data column
+        // and which column it is
+        if (row == 0) {
+            // if header column, check the type of column and set the gravity accordingly
+            if (col == SubcategoryColumns.NAME.getPosition()) {
+                control.setGravity(Gravity.START);
+                control.setPadding(20,0,0,0);
+            } else if (col == SubcategoryColumns.AMOUNT.getPosition()) {
+                control.setPadding(0,0,30,0);
+                control.setGravity(Gravity.END);
+            }
+
+        } else {
+            // if data row & if the amount column, align the text to the right
+            if (col == SubcategoryColumns.NAME.getPosition()) {
+                control.setPadding(30,0,0,0);
+            } else if (col == SubcategoryColumns.AMOUNT.getPosition()) {
+                control.setPadding(0,0,30,0);
+                control.setGravity(Gravity.END);
+            }
         }
 
         // assign the control it's value

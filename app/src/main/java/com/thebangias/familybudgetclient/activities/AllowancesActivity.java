@@ -1,13 +1,9 @@
 package com.thebangias.familybudgetclient.activities;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.support.v4.widget.DrawerLayout;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,7 +12,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
@@ -24,13 +19,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.thebangias.familybudgetclient.R;
-import com.thebangias.familybudgetclient.controls.SubcategoryGridAdapter;
+import com.thebangias.familybudgetclient.adapters.SubcategoryGridAdapter;
 import com.thebangias.familybudgetclient.model.Allowance;
 import com.thebangias.familybudgetclient.model.AllowancesResponse;
 import com.thebangias.familybudgetclient.model.CategoryAllowance;
 import com.thebangias.familybudgetclient.model.SubcategoryAllowance;
 import com.thebangias.familybudgetclient.utils.APIUtils;
+import com.thebangias.familybudgetclient.views.AllowancesView;
 
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 
@@ -42,12 +39,10 @@ public class AllowancesActivity extends AppCompatActivity {
     private ActionBarDrawerToggle drawerToggle;
     private ListView leftDrawerList;
     private ArrayAdapter<String> navigationDrawerAdapter;
-    private TextView accountTitle;
-    private TextView accountReconciledBalance;
-    private TextView categoryName;
-    private GridView gridView;
     private GetAllowancesTask getAllowancesTask;
     private List<Allowance> allowances;
+    private AllowancesView allowancesView;
+    private NumberFormat currency;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +61,12 @@ public class AllowancesActivity extends AppCompatActivity {
         initView();
         initDrawer();
 
+        // set up the currency formatter
+        currency = NumberFormat.getCurrencyInstance();
+        DecimalFormat formatter = (DecimalFormat)currency;
+        formatter.setNegativePrefix(getString(R.string.negativeCurrencyPrefix) + formatter.getPositivePrefix());
+        formatter.setNegativeSuffix(getString(R.string.negativeCurrencySuffix));
+
         // get the allowance data via an AsyncTask & populate the views
         getAllowancesTask = new GetAllowancesTask(savedRootUrl, savedEmail, savedPassword);
         getAllowancesTask.execute((Void) null);
@@ -77,10 +78,7 @@ public class AllowancesActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         if (toolbar != null) { setSupportActionBar(toolbar); }
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
-        accountTitle = (TextView) findViewById(R.id.account_title);
-        accountReconciledBalance = (TextView) findViewById(R.id.account_reconciled_balance);
-        gridView = (GridView) findViewById(R.id.gridView);
-        categoryName = (TextView) findViewById(R.id.categoryName);
+        allowancesView = (AllowancesView) findViewById(R.id.allowances_view1);
     }
 
     private void initDrawer() {
@@ -106,16 +104,8 @@ public class AllowancesActivity extends AppCompatActivity {
         // TODO: create a new fragment to use for this account and provide it the data it needs
 
         if (allowances != null) {
-            Allowance accountBalance = allowances.get(position);
-            accountTitle.setText(accountBalance.getAccountName());
-            accountReconciledBalance.setText(NumberFormat.getCurrencyInstance().format(accountBalance.getReconciledAmount()));
-
-            CategoryAllowance category = accountBalance.getCategories().get(0);
-            List<SubcategoryAllowance> subcategories = category.getSubcategories();
-            SubcategoryGridAdapter scAdapter = new SubcategoryGridAdapter(this, subcategories);
-            categoryName.setText(category.getCategoryName());
-            gridView.setNumColumns(scAdapter.SUBCATEGORY_COLUMN_COUNT);
-            gridView.setAdapter(scAdapter);
+            Allowance allowance = allowances.get(position);
+            allowancesView.setAllowances(this, currency, allowance);
             drawerLayout.closeDrawers();
         }
     }

@@ -2,6 +2,9 @@
 <resources>
     <color name="primaryColor">#ff0f8b0d</color>
     <color name="primaryColorDark">#000000</color>
-    <color name="datagrid_header_bg">#dddddd</color>
+    <color name="category_header_bg">#aaaaaa</color>
+    <color name="datagrid_header_bg">#cccccc</color>
     <color name="datagrid_header_text">#000000</color>
+    <color name="datagrid_data_text">#000000</color>
+    <color name="negative_currency">#FF0000</color>
 </resources>

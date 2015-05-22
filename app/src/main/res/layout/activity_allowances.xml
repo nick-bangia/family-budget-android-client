@@ -15,47 +15,13 @@
 
         <!-- activity view -->
         <RelativeLayout
-            android:layout_width="match_parent"
-            android:background="#fff"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_width="match_parent">
 
-            <TextView
-                android:id="@+id/account_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="10sp"
-                android:textSize="30sp"
-                android:text="Acc.Name"/>
-
-            <TextView
-                android:id="@+id/account_reconciled_balance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingRight="10sp"
-                android:layout_alignParentRight="true"
-                android:gravity="right"
-                android:textSize="30sp"
-                android:text="Acc. Bal"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="CategoryName"
-                android:id="@+id/categoryName"
-                android:layout_below="@+id/account_title"
-                android:layout_alignStart="@+id/gridView"
-                android:layout_marginTop="25dp"
-                android:background="@color/background_material_light"/>
-
-            <GridView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/gridView"
-                android:layout_below="@id/categoryName"
-                android:layout_marginTop="5dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp" />
+            <com.thebangias.familybudgetclient.views.AllowancesView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/allowances_view1"/>
 
         </RelativeLayout>
 
