@@ -38,7 +38,6 @@ public class LoginActivity extends AppCompatActivity {
     private AutoCompleteTextView emailView;
     private EditText passwordView;
     private View progressView;
-    private View loginFormView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +48,6 @@ public class LoginActivity extends AppCompatActivity {
         apiRootUrlView = (EditText) findViewById(R.id.rootApiUrl);
         emailView = (AutoCompleteTextView) findViewById(R.id.email);
         passwordView = (EditText) findViewById(R.id.password);
-        loginFormView = findViewById(R.id.login_form);
         progressView = findViewById(R.id.login_progress);
 
         // check shared preferences if the username/password/root URL exist
@@ -58,30 +56,20 @@ public class LoginActivity extends AppCompatActivity {
                 packageName, Context.MODE_PRIVATE);
         String savedRootUrl = prefs.getString(packageName + ".apirooturl", null);
         String savedEmail = prefs.getString(packageName + ".email", null);
-        String savedPassword = prefs.getString(packageName + ".password", null);
 
         // set the text fields with the saved preferences (or null if they don't exist)
         apiRootUrlView.setText(savedRootUrl);
         emailView.setText(savedEmail);
-        passwordView.setText(savedPassword);
 
-        // if all three do exist, attempt to login, otherwise, proceed to finish setting up the
-        // login form
-        if (savedRootUrl != null && savedEmail != null && savedPassword != null) {
-
-            attemptLogin();
-        } else {
-
-            // Finish setting up the login form.
-            // set up the signin button to attemptLogin on click
-            Button emailSignInButton = (Button) findViewById(R.id.sign_in_button);
-            emailSignInButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    attemptLogin();
-                }
-            });
-        }
+        // Finish setting up the login form.
+        // set up the signin button to attemptLogin on click
+        Button emailSignInButton = (Button) findViewById(R.id.sign_in_button);
+        emailSignInButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                attemptLogin();
+            }
+        });
     }
 
     /**
@@ -172,15 +160,6 @@ public class LoginActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            loginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            loginFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    loginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
             progressView.setVisibility(show ? View.VISIBLE : View.GONE);
             progressView.animate().setDuration(shortAnimTime).alpha(
                     show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
@@ -193,7 +172,6 @@ public class LoginActivity extends AppCompatActivity {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             progressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            loginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -246,7 +224,7 @@ public class LoginActivity extends AppCompatActivity {
             boolean isAuthenticated = false;
 
             try {
-                APIUtils utils = new APIUtils(email, password, apiRootUrl);
+                APIUtils utils = new APIUtils(LoginActivity.this, email, password, apiRootUrl);
                 // check with the data service if the credentials are correct
                 isAuthenticated = utils.CheckAuthentication();
             } catch (Exception ex) {

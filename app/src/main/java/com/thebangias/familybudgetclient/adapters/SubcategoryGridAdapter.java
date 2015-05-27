@@ -20,14 +20,15 @@ public class SubcategoryGridAdapter extends BaseAdapter {
 
     private Activity context = null;
     private List<SubcategoryAllowance> items = null;
-    public final int SUBCATEGORY_COLUMN_COUNT = 2;
+    public final int SUBCATEGORY_COLUMN_COUNT = 3;
     private NumberFormat currency;
 
     // an enum to help define the columns of the subcategory grid
     private enum SubcategoryColumns {
 
         NAME(0),
-        AMOUNT(1);
+        RECONCILED_AMOUNT(1),
+        PENDING_AMOUNT(2);
 
         private SubcategoryColumns(int position) {
             this.position = position;
@@ -76,47 +77,54 @@ public class SubcategoryGridAdapter extends BaseAdapter {
             control = new TextView(context);
         }
 
-        // if this row is a header, set the background color
+        // set some formatting for the cells given its position in the gridview
         if (row == 0) {
-
+            // set the header's background & text color
             control.setBackgroundColor(context.getResources().getColor(R.color.datagrid_header_bg));
             control.setTextColor(context.getResources().getColor(R.color.datagrid_header_text));
+
+            // check the type of column and set the gravity & padding
+            if (col == SubcategoryColumns.NAME.getPosition()) {
+                control.setPadding(10, 0, 0, 0);
+                control.setGravity(Gravity.START);
+            } else if (col == SubcategoryColumns.RECONCILED_AMOUNT.getPosition()) {
+                control.setPadding(5, 0, 5, 0);
+                control.setGravity(Gravity.END);
+            } else if (col == SubcategoryColumns.PENDING_AMOUNT.getPosition()) {
+                control.setPadding(0, 0, 10, 0);
+                control.setGravity(Gravity.END);
+            }
         } else {
             // default the text color for the data
             control.setTextColor(context.getResources().getColor(R.color.datagrid_data_text));
+
             // if the amount field is negative, then color it red
-            if (col == SubcategoryColumns.AMOUNT.getPosition() &&
+            if ((col == SubcategoryColumns.RECONCILED_AMOUNT.getPosition() ||
+                 col == SubcategoryColumns.PENDING_AMOUNT.getPosition()) &&
                 text.startsWith(context.getResources().getString(R.string.negativeCurrencyPrefix))) {
                 // this is not the header AND it is the amount position AND it is negative so
                 // change the text color to the negative_currency color
                 control.setTextColor(context.getResources().getColor(R.color.negative_currency));
             }
-        }
 
-        // setup each controls formatting based on whether it is a header column, or data column
-        // and which column it is
-        if (row == 0) {
-            // if header column, check the type of column and set the gravity accordingly
+            // set the gravity and padding as needed
             if (col == SubcategoryColumns.NAME.getPosition()) {
+                control.setPadding(15, 0, 0, 0);
                 control.setGravity(Gravity.START);
-                control.setPadding(20,0,0,0);
-            } else if (col == SubcategoryColumns.AMOUNT.getPosition()) {
-                control.setPadding(0,0,30,0);
+            } else if (col == SubcategoryColumns.RECONCILED_AMOUNT.getPosition()) {
+                control.setPadding(5, 0, 5, 0);
+                control.setGravity(Gravity.END);
+            } else if (col == SubcategoryColumns.PENDING_AMOUNT.getPosition()) {
+                control.setPadding(0, 0, 10, 0);
                 control.setGravity(Gravity.END);
             }
 
-        } else {
-            // if data row & if the amount column, align the text to the right
-            if (col == SubcategoryColumns.NAME.getPosition()) {
-                control.setPadding(30,0,0,0);
-            } else if (col == SubcategoryColumns.AMOUNT.getPosition()) {
-                control.setPadding(0,0,30,0);
-                control.setGravity(Gravity.END);
-            }
+            // set the size of the text
+            control.setTextSize(10);
         }
 
         // assign the control it's value
-        control.setText(text, TextView.BufferType.NORMAL);
+        control.setText(text);
 
         // return the view
         return control;
@@ -157,8 +165,10 @@ public class SubcategoryGridAdapter extends BaseAdapter {
 
             if (col == SubcategoryColumns.NAME.getPosition()) {
                 return context.getString(R.string.sc_header_name);
-            } else if (col == SubcategoryColumns.AMOUNT.getPosition()) {
-                return context.getString(R.string.sc_header_amount);
+            } else if (col == SubcategoryColumns.RECONCILED_AMOUNT.getPosition()) {
+                return context.getString(R.string.sc_header_reconciledamount);
+            } else if (col == SubcategoryColumns.PENDING_AMOUNT.getPosition()) {
+                return context.getString(R.string.sc_header_pendingamount);
             }
         }
 
@@ -170,8 +180,10 @@ public class SubcategoryGridAdapter extends BaseAdapter {
 
                 if (col == SubcategoryColumns.NAME.getPosition()) {
                     return thisAllowance.getSubcategoryName();
-                } else if (col == SubcategoryColumns.AMOUNT.getPosition()) {
+                } else if (col == SubcategoryColumns.RECONCILED_AMOUNT.getPosition()) {
                     return currency.format(thisAllowance.getReconciledAmount());
+                } else if (col == SubcategoryColumns.PENDING_AMOUNT.getPosition()) {
+                    return currency.format(thisAllowance.getPendingAmount());
                 }
             }
         } catch (IndexOutOfBoundsException ex) {

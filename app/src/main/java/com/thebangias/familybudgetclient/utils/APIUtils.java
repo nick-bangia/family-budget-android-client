@@ -1,11 +1,14 @@
 package com.thebangias.familybudgetclient.utils;
 
+import android.content.Context;
 import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.thebangias.familybudgetclient.R;
 import com.thebangias.familybudgetclient.model.AllowancesResponse;
 import com.thebangias.familybudgetclient.model.Ping;
+import com.thebangias.familybudgetclient.model.RefreshAllowancesResponse;
 import com.thebangias.familybudgetclient.model.abstractions.APIResponseObject;
 import com.thebangias.familybudgetclient.model.abstractions.DataObject;
 import com.thebangias.familybudgetclient.model.PingResponse;
@@ -26,8 +29,10 @@ public class APIUtils {
     private String baseUrl;
     private String email;
     private String password;
+    private Context context;
 
-    public APIUtils(String email, String password, String baseUrl) {
+    public APIUtils(Context ctx, String email, String password, String baseUrl) {
+        this.context = ctx;
         this.baseUrl = baseUrl;
         this.email = email;
         this.password = password;
@@ -38,7 +43,8 @@ public class APIUtils {
         boolean isValidCredentials = false;
 
         // issue a request to /ping to determine if the username/password combo is valid
-        HttpURLConnection connection = GetAuthorizedConnection("/ping");
+        HttpURLConnection connection = GetAuthorizedConnection(
+            this.context.getResources().getString(R.string.api_ping));
         if (connection != null) {
             PingResponse response = (PingResponse) Get(connection, PingResponse.class);
 
@@ -57,10 +63,26 @@ public class APIUtils {
         AllowancesResponse response = null;
 
         // issue a request to the API to get the current allowances
-        HttpURLConnection connection = GetAuthorizedConnection("/allowances");
+        HttpURLConnection connection = GetAuthorizedConnection(
+            this.context.getResources().getString(R.string.api_allowances));
         if (connection != null) {
             // if the connection is not null, issue the Get request
             response = (AllowancesResponse) Get(connection, AllowancesResponse.class);
+        }
+
+        return response;
+    }
+
+    public RefreshAllowancesResponse RefreshAllowances() {
+        // initialize the RefreshAllowancesResponse
+        RefreshAllowancesResponse response = null;
+
+        // issue a request to the API to refresh the allowances
+        HttpURLConnection connection = GetAuthorizedConnection(
+            this.context.getResources().getString(R.string.api_refresh_allowances));
+        if (connection != null) {
+            // if the connection is not null, issue the Get request
+            response = (RefreshAllowancesResponse) Get(connection, RefreshAllowancesResponse.class);
         }
 
         return response;

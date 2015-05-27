@@ -5,4 +5,5 @@
     android:background="?attr/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:title="@string/title_activity_allowances" />
+    android:title="@string/title_activity_allowances"
+    android:titleTextAppearance="@color/toolbar_text"/>

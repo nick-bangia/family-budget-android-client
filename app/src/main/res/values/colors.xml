@@ -2,9 +2,13 @@
 <resources>
     <color name="primaryColor">#ff0f8b0d</color>
     <color name="primaryColorDark">#000000</color>
+    <color name="toolbar_text">#FFFFFF</color>
+    <color name="refreshIconColor">#FFFFFF</color>
     <color name="category_header_bg">#aaaaaa</color>
     <color name="datagrid_header_bg">#cccccc</color>
     <color name="datagrid_header_text">#000000</color>
     <color name="datagrid_data_text">#000000</color>
+    <color name="lastUpdated_text">#999999</color>
+    <color name="account_pending_balance">#999999</color>
     <color name="negative_currency">#FF0000</color>
 </resources>

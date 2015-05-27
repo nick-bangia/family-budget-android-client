@@ -2,6 +2,7 @@ package com.thebangias.familybudgetclient.views;
 
 import android.app.Activity;
 import android.content.Context;
+import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.TableLayout;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import com.thebangias.familybudgetclient.R;
 import com.thebangias.familybudgetclient.model.Allowance;
 import com.thebangias.familybudgetclient.model.CategoryAllowance;
+import com.thebangias.familybudgetclient.utils.DateUtilities;
 
 import java.text.NumberFormat;
 import java.util.List;
@@ -23,6 +25,8 @@ public class AllowancesView extends TableLayout {
     private TextView accountTitle;
     private TextView accountBalance;
     private int currentViewCount;
+    private TextView lastUpdated;
+    private TextView accountPendingBalance;
 
     public AllowancesView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -34,6 +38,8 @@ public class AllowancesView extends TableLayout {
         allowancesLayout = (TableLayout) findViewById(R.id.allowances_layout);
         accountTitle = (TextView) findViewById(R.id.account_title);
         accountBalance = (TextView) findViewById(R.id.account_reconciled_balance);
+        lastUpdated = (TextView) findViewById(R.id.lastUpdated);
+        accountPendingBalance = (TextView) findViewById(R.id.account_pending_balance);
     }
 
     public AllowancesView(Context context) {
@@ -48,14 +54,31 @@ public class AllowancesView extends TableLayout {
         accountBalance.setText(value);
     }
 
+    public void setAccountPendingBalance(String value) {
+        accountPendingBalance.setText("pending " + value);
+        if (value.startsWith(getContext().getString(R.string.negativeCurrencyPrefix))) {
+            accountPendingBalance.setTextColor(getResources().getColor(R.color.negative_currency));
+        }
+    }
+
+    public void setLastUpdated(String value) {
+        lastUpdated.setText(value);
+    }
+
     public void setAllowances(Activity activity, NumberFormat currency, Allowance anAllowance) {
 
         // account info
         this.setAccountTitle(anAllowance.getAccountName());
         this.setAccountBalance(currency.format(anAllowance.getReconciledAmount()));
 
+       this.setLastUpdated(DateUtils.getRelativeTimeSpanString(
+            anAllowance.getLatestTransactionDate().getTime(),
+            DateUtilities.GetUTCdatetimeAsDate().getTime(),
+            DateUtils.MINUTE_IN_MILLIS).toString());
+        this.setAccountPendingBalance(currency.format(anAllowance.getPendingAmount()));
+
         // remove previous category views from the layout
-        allowancesLayout.removeViews(1, currentViewCount);
+        allowancesLayout.removeViews(2, currentViewCount);
 
         // get the list of categoryAllowances to generate grids view
         List<CategoryAllowance> categories = anAllowance.getCategories();
@@ -73,7 +96,7 @@ public class AllowancesView extends TableLayout {
             categoryGrid.RenderGrid(category, currency);
 
             // add the grid to the allowances table layout, at the correct position (i + 1)
-            allowancesLayout.addView(categoryGrid, i+1);
+            allowancesLayout.addView(categoryGrid, i+2);
         }
     }
 }

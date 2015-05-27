@@ -9,23 +9,26 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.GridView;
+
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.thebangias.familybudgetclient.R;
-import com.thebangias.familybudgetclient.adapters.SubcategoryGridAdapter;
 import com.thebangias.familybudgetclient.model.Allowance;
 import com.thebangias.familybudgetclient.model.AllowancesResponse;
-import com.thebangias.familybudgetclient.model.CategoryAllowance;
-import com.thebangias.familybudgetclient.model.SubcategoryAllowance;
+import com.thebangias.familybudgetclient.model.RefreshAllowancesResponse;
 import com.thebangias.familybudgetclient.utils.APIUtils;
 import com.thebangias.familybudgetclient.views.AllowancesView;
+import com.thebangias.familybudgetclient.views.DrawerAccountItem;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -38,11 +41,15 @@ public class AllowancesActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
     private ListView leftDrawerList;
-    private ArrayAdapter<String> navigationDrawerAdapter;
+    private AccountItemAdapter navigationDrawerAdapter;
     private GetAllowancesTask getAllowancesTask;
+    private RefreshAllowancesTask refreshAllowancesTask;
     private List<Allowance> allowances;
     private AllowancesView allowancesView;
     private NumberFormat currency;
+    private String rootUrl;
+    private String email;
+    private String password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +60,9 @@ public class AllowancesActivity extends AppCompatActivity {
         String packageName = getString(R.string.package_name);
         SharedPreferences prefs = this.getSharedPreferences(
                 packageName, Context.MODE_PRIVATE);
-        String savedRootUrl = prefs.getString(packageName + ".apirooturl", null);
-        String savedEmail = prefs.getString(packageName + ".email", null);
-        String savedPassword = prefs.getString(packageName + ".password", null);
+        rootUrl = prefs.getString(packageName + ".apirooturl", null);
+        email = prefs.getString(packageName + ".email", null);
+        password = prefs.getString(packageName + ".password", null);
 
         // initialize the views, navigation drawer, and toolbar
         initView();
@@ -68,7 +75,7 @@ public class AllowancesActivity extends AppCompatActivity {
         formatter.setNegativeSuffix(getString(R.string.negativeCurrencySuffix));
 
         // get the allowance data via an AsyncTask & populate the views
-        getAllowancesTask = new GetAllowancesTask(savedRootUrl, savedEmail, savedPassword);
+        getAllowancesTask = new GetAllowancesTask(rootUrl, email, password);
         getAllowancesTask.execute((Void) null);
     }
 
@@ -131,12 +138,18 @@ public class AllowancesActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        /*if (id == R.id.action_settings) {
             return true;
         }
         if (drawerToggle.onOptionsItemSelected(item)) {
             return true;
+        }*/
+        if (id == R.id.menu_refresh) {
+            // execute the refresh operation
+            refreshAllowancesTask = new RefreshAllowancesTask(rootUrl, email, password);
+            refreshAllowancesTask.execute();
         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -161,7 +174,7 @@ public class AllowancesActivity extends AppCompatActivity {
             AllowancesResponse response = null;
 
             try {
-                APIUtils utils = new APIUtils(email, password, apiRootUrl);
+                APIUtils utils = new APIUtils(AllowancesActivity.this, email, password, apiRootUrl);
                 // retreive the allowances from the API
                 response = utils.GetAllowances();
             } catch (Exception ex) {
@@ -176,28 +189,112 @@ public class AllowancesActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(final AllowancesResponse response) {
-            getAllowancesTask = null;
 
             // set the allowances in the activity
             allowances = response.GetStronglyTypedListFrom(response.getData());
 
             // get the array of accounts to add to the drawer
-            String[] leftSliderData = new String[allowances.size()];
+            DrawerAccountItem[] leftSliderData = new DrawerAccountItem[allowances.size()];
             NumberFormat currency = NumberFormat.getCurrencyInstance();
             for (int i=0; i < allowances.size(); i++) {
                 Allowance currentAccount = allowances.get(i);
-                leftSliderData[i] = currentAccount.getAccountName() +
-                        "      " + currency.format(currentAccount.getReconciledAmount());
+                leftSliderData[i] = new DrawerAccountItem(currentAccount.getAccountName(),
+                    currency.format(currentAccount.getReconciledAmount()));
             }
 
             // update navigation drawer accordingly & content accordingly
-            navigationDrawerAdapter=new ArrayAdapter( AllowancesActivity.this, android.R.layout.simple_list_item_1, leftSliderData);
+            navigationDrawerAdapter=new AccountItemAdapter( AllowancesActivity.this, R.layout.drawer_item, leftSliderData);
             leftDrawerList.setAdapter(navigationDrawerAdapter);
+            drawerLayout.openDrawer(Gravity.LEFT);
         }
 
         @Override
         protected void onCancelled() {
-            getAllowancesTask = null;
+        }
+    }
+
+    /**
+     * Represents an asynchronous task used to refresh allowance data from the API
+     */
+    private class RefreshAllowancesTask extends AsyncTask<Void, Void, RefreshAllowancesResponse> {
+
+        private final String email;
+        private final String password;
+        private final String apiRootUrl;
+
+        RefreshAllowancesTask(String apiRootUrl, String email, String password) {
+            this.email = email;
+            this.password = password;
+            this.apiRootUrl = apiRootUrl;
+        }
+
+        @Override
+        protected RefreshAllowancesResponse doInBackground(Void... params) {
+            // initialize an AllowanceResponse
+            RefreshAllowancesResponse response = null;
+
+            try {
+                APIUtils utils = new APIUtils(AllowancesActivity.this, email, password, apiRootUrl);
+                // retreive the allowances from the API
+                response = utils.RefreshAllowances();
+            } catch (Exception ex) {
+                response = new RefreshAllowancesResponse();
+                response.setStatus("failure");
+                response.setReason(ex.getMessage());
+            }
+
+            // return the AllowancesResponse, whether successful or not
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(final RefreshAllowancesResponse response) {
+            refreshAllowancesTask = null;
+
+            if (response != null && response.getStatus().equals("ok")) {
+                // if the refresh is ok, kick off the allowancesTask to grab the allowances
+                getAllowancesTask = new GetAllowancesTask(this.apiRootUrl, this.email, this.password);
+                getAllowancesTask.execute();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            refreshAllowancesTask = null;
+        }
+    }
+
+    public class AccountItemAdapter extends ArrayAdapter<DrawerAccountItem> {
+
+        Context mContext;
+        int layoutResourceId;
+        DrawerAccountItem data[] = null;
+
+        public AccountItemAdapter(Context mContext, int layoutResourceId, DrawerAccountItem[] data) {
+
+            super(mContext, layoutResourceId, data);
+            this.layoutResourceId = layoutResourceId;
+            this.mContext = mContext;
+            this.data = data;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            View listItem = convertView;
+
+            LayoutInflater inflater = ((AllowancesActivity) mContext).getLayoutInflater();
+            listItem = inflater.inflate(layoutResourceId, parent, false);
+
+            TextView accountLabel = (TextView) listItem.findViewById(R.id.drawer_account_label);
+            TextView accountBalance = (TextView) listItem.findViewById(R.id.drawer_account_balance);
+
+            DrawerAccountItem accountItem = data[position];
+
+            accountLabel.setText(accountItem.accountLabel);
+            accountBalance.setText(accountItem.accountBalance);
+
+            return listItem;
         }
     }
 

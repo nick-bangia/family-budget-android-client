@@ -7,8 +7,10 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.widget.GridView;
+import android.widget.ListAdapter;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -79,6 +81,9 @@ public class CategoryGrid extends TableRow {
 
     public void setCategoryBalance(String value) {
         categoryBalance.setText(value);
+        if (value.startsWith(getContext().getString(R.string.negativeCurrencyPrefix))) {
+            categoryBalance.setTextColor(getResources().getColor(R.color.negative_currency));
+        }
     }
 
     public void RenderGrid(CategoryAllowance category, NumberFormat currency) {
@@ -91,6 +96,46 @@ public class CategoryGrid extends TableRow {
         this.setCategoryBalance(currency.format(category.getReconciledAmount()));
         this.subcategoryGrid.setNumColumns(scAdapter.SUBCATEGORY_COLUMN_COUNT);
         this.subcategoryGrid.setAdapter(scAdapter);
+        setGridViewHeight(subcategoryGrid, scAdapter.SUBCATEGORY_COLUMN_COUNT);
+    }
+
+    private void setGridViewHeight(GridView subcategoryGrid, int columns) {
+        ListAdapter adapter = subcategoryGrid.getAdapter();
+        // exit this method if the data adapter is null
+        if (adapter == null) {
+            return;
+        }
+
+        // initalize the variables needed to compute the gridview height
+        int headerHeight = 0;
+        int itemHeight = 0;
+        int totalHeight = 0;
+        int items = adapter.getCount();
+        int rows = 0;
+
+        // get the height of the header row to that of the top most cell
+        View headerItem = adapter.getView(0, null, subcategoryGrid);
+        headerItem.measure(0,0);
+        headerHeight = headerItem.getMeasuredHeight();
+
+        // get the height of a list item (use columns as that position should be the first item
+        View listItem = adapter.getView(columns, null, subcategoryGrid);
+        listItem.measure(0,0);
+        itemHeight = listItem.getMeasuredHeight();
+
+        // compute the total height of the gridview using the total item rows * their height plus
+        // the header height
+        if ((items - columns) >= columns) {
+            rows = (items - columns) / columns;
+            totalHeight = headerHeight + (rows * itemHeight);
+        } else {
+            totalHeight = headerHeight;
+        }
+
+        // set the height
+        ViewGroup.LayoutParams params = subcategoryGrid.getLayoutParams();
+        params.height = totalHeight;
+        subcategoryGrid.setLayoutParams(params);
     }
 
     private class GridAnimationListener implements Animation.AnimationListener {

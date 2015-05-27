@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.TranslateAnimation;
 
 import com.thebangias.familybudgetclient.R;
 
@@ -30,6 +31,25 @@ public class FXUtils {
         Animation a = AnimationUtils.loadAnimation(ctx, R.anim.slide_up);
 
         // if a listener was provided, attach it now
+        if (listener != null) {
+            a.setAnimationListener(listener);
+        }
+
+        // perform the animation
+        doAnimation(a, v);
+    }
+
+    public static void translate(Context ctx, View v, float fromXDelta, float fromYDelta,
+                                 float toXDelta, float toYDelta, long duration,
+                                 Animation.AnimationListener listener) {
+
+        // load the animation
+        TranslateAnimation a = new TranslateAnimation(fromXDelta, toXDelta, fromYDelta, toYDelta);
+        a.setDuration(duration);
+        a.setFillAfter(true);
+        a.setInterpolator(ctx, android.R.anim.linear_interpolator);
+
+        // if a listener was provided attach it now
         if (listener != null) {
             a.setAnimationListener(listener);
         }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <ScrollView>
     <TableLayout
         android:id="@+id/allowances_layout"
         android:layout_width="match_parent"
@@ -7,7 +8,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:layout_marginTop="10dp"
-        android:stretchColumns="1,2,3">
+        android:stretchColumns="1,2">
 
         <TableRow
             android:id="@+id/accountRow"
@@ -16,16 +17,35 @@
 
             <TextView
                 android:id="@+id/account_title"
-                android:textSize="30sp"
-                android:text="Acc.Name" />
+                android:textSize="30sp" />
 
             <TextView
                 android:id="@+id/account_reconciled_balance"
                 android:textSize="30sp"
-                android:text="Acc. Bal"
-                android:gravity="right"/>
+                android:gravity="end" />
+
+        </TableRow>
+        <TableRow
+            android:id="@+id/lastUpdatedRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/lastUpdated"
+                android:textSize="20sp"
+                android:textStyle="italic"
+                android:textColor="@color/lastUpdated_text"
+                android:gravity="start"/>
+
+            <TextView
+                android:id="@+id/account_pending_balance"
+                android:textSize="20sp"
+                android:textStyle="italic"
+                android:textColor="@color/account_pending_balance"
+                android:gravity="end"/>
 
         </TableRow>
 
     </TableLayout>
+    </ScrollView>
 </merge>
