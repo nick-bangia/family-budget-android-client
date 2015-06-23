@@ -1,17 +1,18 @@
 package com.thebangias.familybudgetclient.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.thebangias.familybudgetclient.R;
+import com.thebangias.familybudgetclient.model.APIToken;
 import com.thebangias.familybudgetclient.model.AllowancesResponse;
-import com.thebangias.familybudgetclient.model.Ping;
+import com.thebangias.familybudgetclient.model.LoginResponse;
 import com.thebangias.familybudgetclient.model.RefreshAllowancesResponse;
 import com.thebangias.familybudgetclient.model.abstractions.APIResponseObject;
 import com.thebangias.familybudgetclient.model.abstractions.DataObject;
-import com.thebangias.familybudgetclient.model.PingResponse;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -27,35 +28,31 @@ import java.util.List;
 public class APIUtils {
 
     private String baseUrl;
-    private String email;
-    private String password;
     private Context context;
 
-    public APIUtils(Context ctx, String email, String password, String baseUrl) {
+    public APIUtils(Context ctx, String baseUrl) {
         this.context = ctx;
         this.baseUrl = baseUrl;
-        this.email = email;
-        this.password = password;
     }
 
-    public boolean CheckAuthentication() {
-        // initialize the boolean return value
-        boolean isValidCredentials = false;
+    public APIToken Login(String email, String password) {
+        // initialize the token return value
+        APIToken apiToken = null;
 
         // issue a request to /ping to determine if the username/password combo is valid
         HttpURLConnection connection = GetAuthorizedConnection(
-            this.context.getResources().getString(R.string.api_ping));
+            this.context.getResources().getString(R.string.api_login), email, password);
         if (connection != null) {
-            PingResponse response = (PingResponse) Get(connection, PingResponse.class);
+            LoginResponse response = (LoginResponse) Get(connection, LoginResponse.class);
 
             if (response != null && response.getStatus().equals("ok")) {
                 List<? extends DataObject> data = response.getData();
-                List<Ping> pingData = response.GetStronglyTypedListFrom(data);
-                isValidCredentials = pingData.get(0).getIsAuthorized();
+                List<APIToken> apiTokenData = response.GetStronglyTypedListFrom(data);
+                apiToken = apiTokenData.get(0);
             }
         }
 
-        return isValidCredentials;
+        return apiToken;
     }
 
     public AllowancesResponse GetAllowances() {
@@ -63,8 +60,7 @@ public class APIUtils {
         AllowancesResponse response = null;
 
         // issue a request to the API to get the current allowances
-        HttpURLConnection connection = GetAuthorizedConnection(
-            this.context.getResources().getString(R.string.api_allowances));
+        HttpURLConnection connection = GetTokenizedConnection(this.context.getResources().getString(R.string.api_allowances));
         if (connection != null) {
             // if the connection is not null, issue the Get request
             response = (AllowancesResponse) Get(connection, AllowancesResponse.class);
@@ -78,8 +74,7 @@ public class APIUtils {
         RefreshAllowancesResponse response = null;
 
         // issue a request to the API to refresh the allowances
-        HttpURLConnection connection = GetAuthorizedConnection(
-            this.context.getResources().getString(R.string.api_refresh_allowances));
+        HttpURLConnection connection = GetTokenizedConnection(this.context.getResources().getString(R.string.api_refresh_allowances));
         if (connection != null) {
             // if the connection is not null, issue the Get request
             response = (RefreshAllowancesResponse) Get(connection, RefreshAllowancesResponse.class);
@@ -97,7 +92,39 @@ public class APIUtils {
         return GetResponse(connection, apiResponseClass);
     }
 
-    private HttpURLConnection GetAuthorizedConnection(String target) {
+    private HttpURLConnection GetAuthorizedConnection(String target, String email, String password) {
+        // get the connection from target
+        HttpURLConnection connection = GetConnection(target);
+
+        // formulate the Authentication
+        String userCreds = email + ":" + password;
+        String basicAuthentication =
+                "Basic " + new String(Base64.encode(userCreds.getBytes(), Base64.DEFAULT));
+
+        // Set the Authorization header
+        connection.setRequestProperty("Authorization", basicAuthentication);
+
+        return connection;
+    }
+
+    private HttpURLConnection GetTokenizedConnection(String target) {
+        // get the connection from target
+        HttpURLConnection connection = GetConnection(target);
+
+        // formulate the token header
+        String packageName = this.context.getResources().getString(R.string.package_name);
+        SharedPreferences prefs = this.context.getSharedPreferences(
+                packageName, Context.MODE_PRIVATE);
+        String token = prefs.getString(packageName + ".apiToken", null);
+
+        // set the x_access_token header
+        connection.setRequestProperty("x_access_token", token);
+
+        return connection;
+    }
+
+    private HttpURLConnection GetConnection(String target) {
+        // generate a HttpURLConnection from the provided target
         String uri = baseUrl + target;
         HttpURLConnection connection = null;
 
@@ -106,13 +133,6 @@ public class APIUtils {
             URL url = new URL(uri);
             connection = (HttpURLConnection) url.openConnection();
 
-            // formulate the Authentication
-            String userCreds = this.email + ":" + this.password;
-            String basicAuthentication =
-                    "Basic " + new String(Base64.encode(userCreds.getBytes(), Base64.DEFAULT));
-
-            // Set the Authorization header
-            connection.setRequestProperty("Authorization", basicAuthentication);
         } catch (IOException e) {
             // TODO: log exception
             connection = null;
@@ -130,9 +150,6 @@ public class APIUtils {
         // establish the connection, and read back the response using the GSON library and the
         // passed in class
         try {
-            // establish the connection
-            //connection.connect();
-
             // check the response code for the connection & build the APIResponseObject
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 // get the Response data in an InputStream
@@ -147,7 +164,7 @@ public class APIUtils {
                 // if the response code is 401 - Unauthorized, set up the response object accordingly
                 response = apiResponseClass.newInstance();
                 response.setStatus("failure");
-                response.setReason(connection.getResponseMessage());
+                response.setReason("401 - Unauthorized");
             }
 
         } catch (IOException e) {

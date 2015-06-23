@@ -1,6 +1,7 @@
 package com.thebangias.familybudgetclient.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
@@ -75,8 +76,8 @@ public class AllowancesActivity extends AppCompatActivity {
         formatter.setNegativeSuffix(getString(R.string.negativeCurrencySuffix));
 
         // get the allowance data via an AsyncTask & populate the views
-        getAllowancesTask = new GetAllowancesTask(rootUrl, email, password);
-        getAllowancesTask.execute((Void) null);
+        refreshAllowancesTask = new RefreshAllowancesTask(rootUrl);
+        refreshAllowancesTask.execute((Void) null);
     }
 
     private void initView() {
@@ -117,6 +118,13 @@ public class AllowancesActivity extends AppCompatActivity {
         }
     }
 
+    private void RequireLogin() {
+        // start the LoginActivity
+        Intent allowances = new Intent(this, LoginActivity.class);
+        startActivity(allowances);
+        finish();
+    }
+
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -146,7 +154,7 @@ public class AllowancesActivity extends AppCompatActivity {
         }*/
         if (id == R.id.menu_refresh) {
             // execute the refresh operation
-            refreshAllowancesTask = new RefreshAllowancesTask(rootUrl, email, password);
+            refreshAllowancesTask = new RefreshAllowancesTask(rootUrl);
             refreshAllowancesTask.execute();
         }
 
@@ -158,13 +166,9 @@ public class AllowancesActivity extends AppCompatActivity {
      */
     private class GetAllowancesTask extends AsyncTask<Void, Void, AllowancesResponse> {
 
-        private final String email;
-        private final String password;
         private final String apiRootUrl;
 
-        GetAllowancesTask(String apiRootUrl, String email, String password) {
-            this.email = email;
-            this.password = password;
+        GetAllowancesTask(String apiRootUrl) {
             this.apiRootUrl = apiRootUrl;
         }
 
@@ -174,7 +178,7 @@ public class AllowancesActivity extends AppCompatActivity {
             AllowancesResponse response = null;
 
             try {
-                APIUtils utils = new APIUtils(AllowancesActivity.this, email, password, apiRootUrl);
+                APIUtils utils = new APIUtils(AllowancesActivity.this, apiRootUrl);
                 // retreive the allowances from the API
                 response = utils.GetAllowances();
             } catch (Exception ex) {
@@ -189,27 +193,36 @@ public class AllowancesActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(final AllowancesResponse response) {
+            getAllowancesTask = null;
 
-            // set the allowances in the activity
-            allowances = response.GetStronglyTypedListFrom(response.getData());
+            if (response != null && response.getStatus().equals("failure") &&
+                response.getReason().contains("Unauthorized")) {
 
-            // get the array of accounts to add to the drawer
-            DrawerAccountItem[] leftSliderData = new DrawerAccountItem[allowances.size()];
-            NumberFormat currency = NumberFormat.getCurrencyInstance();
-            for (int i=0; i < allowances.size(); i++) {
-                Allowance currentAccount = allowances.get(i);
-                leftSliderData[i] = new DrawerAccountItem(currentAccount.getAccountName(),
-                    currency.format(currentAccount.getReconciledAmount()));
+                // the token is expired, so direct user to login screen
+                RequireLogin();
+            } else {
+                // set the allowances in the activity
+                allowances = response.GetStronglyTypedListFrom(response.getData());
+
+                // get the array of accounts to add to the drawer
+                DrawerAccountItem[] leftSliderData = new DrawerAccountItem[allowances.size()];
+                NumberFormat currency = NumberFormat.getCurrencyInstance();
+                for (int i = 0; i < allowances.size(); i++) {
+                    Allowance currentAccount = allowances.get(i);
+                    leftSliderData[i] = new DrawerAccountItem(currentAccount.getAccountName(),
+                            currency.format(currentAccount.getReconciledAmount()));
+                }
+
+                // update navigation drawer accordingly & content accordingly
+                navigationDrawerAdapter = new AccountItemAdapter(AllowancesActivity.this, R.layout.drawer_item, leftSliderData);
+                leftDrawerList.setAdapter(navigationDrawerAdapter);
+                drawerLayout.openDrawer(Gravity.LEFT);
             }
-
-            // update navigation drawer accordingly & content accordingly
-            navigationDrawerAdapter=new AccountItemAdapter( AllowancesActivity.this, R.layout.drawer_item, leftSliderData);
-            leftDrawerList.setAdapter(navigationDrawerAdapter);
-            drawerLayout.openDrawer(Gravity.LEFT);
         }
 
         @Override
         protected void onCancelled() {
+            getAllowancesTask = null;
         }
     }
 
@@ -218,13 +231,9 @@ public class AllowancesActivity extends AppCompatActivity {
      */
     private class RefreshAllowancesTask extends AsyncTask<Void, Void, RefreshAllowancesResponse> {
 
-        private final String email;
-        private final String password;
         private final String apiRootUrl;
 
-        RefreshAllowancesTask(String apiRootUrl, String email, String password) {
-            this.email = email;
-            this.password = password;
+        RefreshAllowancesTask(String apiRootUrl) {
             this.apiRootUrl = apiRootUrl;
         }
 
@@ -234,7 +243,7 @@ public class AllowancesActivity extends AppCompatActivity {
             RefreshAllowancesResponse response = null;
 
             try {
-                APIUtils utils = new APIUtils(AllowancesActivity.this, email, password, apiRootUrl);
+                APIUtils utils = new APIUtils(AllowancesActivity.this, apiRootUrl);
                 // retreive the allowances from the API
                 response = utils.RefreshAllowances();
             } catch (Exception ex) {
@@ -251,10 +260,16 @@ public class AllowancesActivity extends AppCompatActivity {
         protected void onPostExecute(final RefreshAllowancesResponse response) {
             refreshAllowancesTask = null;
 
-            if (response != null && response.getStatus().equals("ok")) {
-                // if the refresh is ok, kick off the allowancesTask to grab the allowances
-                getAllowancesTask = new GetAllowancesTask(this.apiRootUrl, this.email, this.password);
-                getAllowancesTask.execute();
+            if (response != null && response.getStatus().equals("failure") &&
+                response.getReason().contains("Unauthorized")) {
+                // the token is expired, so direct user to login screen
+                RequireLogin();
+            } else {
+                if (response != null && response.getStatus().equals("ok")) {
+                    // if the refresh is ok, kick off the allowancesTask to grab the allowances
+                    getAllowancesTask = new GetAllowancesTask(this.apiRootUrl);
+                    getAllowancesTask.execute();
+                }
             }
         }
 

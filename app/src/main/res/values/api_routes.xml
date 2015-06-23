@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="api_ping">/ping</string>
+    <string name="api_login">/login</string>
     <string name="api_allowances">/allowances</string>
     <string name="api_refresh_allowances">/refreshAllowances</string>
 </resources>

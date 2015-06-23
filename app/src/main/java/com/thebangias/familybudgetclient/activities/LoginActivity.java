@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.thebangias.familybudgetclient.R;
+import com.thebangias.familybudgetclient.model.APIToken;
 import com.thebangias.familybudgetclient.utils.APIUtils;
 
 /**
@@ -175,20 +176,20 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void FinishLogin(boolean isAuthenticated) {
+    private void FinishLogin(APIToken token) {
         // if the user is authenticated, save their credentials to the
         // shared preferences, and continue to the home screen
-        if (isAuthenticated) {
+        if (token != null) {
             String packageName = getString(R.string.package_name);
             SharedPreferences prefs = this.getSharedPreferences(
                     packageName, Context.MODE_PRIVATE);
             Editor prefsEditor = prefs.edit();
             prefsEditor.putString(packageName + ".apirooturl", apiRootUrlView.getText().toString());
             prefsEditor.putString(packageName + ".email", emailView.getText().toString());
-            prefsEditor.putString(packageName + ".password", passwordView.getText().toString());
+            prefsEditor.putString(packageName + ".apiToken", token.getAccess_token());
             prefsEditor.apply();
 
-            // open the HomeActivity
+            // start the AllowancesActivity
             Intent allowances = new Intent(this, AllowancesActivity.class);
             startActivity(allowances);
             finish();
@@ -206,7 +207,7 @@ public class LoginActivity extends AppCompatActivity {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    private class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    private class UserLoginTask extends AsyncTask<Void, Void, APIToken> {
 
         private final String email;
         private final String password;
@@ -219,28 +220,28 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
-            // initialize the return boolean value
-            boolean isAuthenticated = false;
+        protected APIToken doInBackground(Void... params) {
+            // initialize the return token
+            APIToken apiToken = null;
 
             try {
-                APIUtils utils = new APIUtils(LoginActivity.this, email, password, apiRootUrl);
+                APIUtils utils = new APIUtils(LoginActivity.this, apiRootUrl);
                 // check with the data service if the credentials are correct
-                isAuthenticated = utils.CheckAuthentication();
+                apiToken = utils.Login(email, password);
             } catch (Exception ex) {
                 // TODO: log any exceptions caught
             }
 
-            return isAuthenticated;
+            return apiToken;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final APIToken token) {
             authTask = null;
             showProgress(false);
 
             // when complete, send the authentication result back to the LoginActivity
-            FinishLogin(success);
+            FinishLogin(token);
         }
 
         @Override

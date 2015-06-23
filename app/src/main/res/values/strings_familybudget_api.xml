@@ -1,4 +1,0 @@
-<resources>
-    <!-- API routes for the Family Budget API -->
-    <string name="CredentialsCheck">/ping</string>
-</resources>
